@@ -14,7 +14,7 @@ class Config:
             raise RuntimeError('config error')
 
         if not os.getenv('AUTH_CONFIG'):
-            raise RuntimeError('no AUTH_CONFIG environment variable found')
+            raise RuntimeError('no AUTH_CONFIG environment variable set')
 
     def get_labels_repo(self):
         return self.config['labels']['l']
