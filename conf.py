@@ -25,6 +25,3 @@ class Config:
     # username:token
     def get_github_login(self):
         return self.auth_conf.split(':')[0], self.auth_conf.split(':')[1]
-
-c = Config('cfg.cfg')
-print(c.get_repos_to_synch())

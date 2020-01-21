@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 class Service(metaclass=ABCMeta):
     @abstractmethod
-    def __init__(self):
+    def __init__(self, config):
         pass
 
     @abstractmethod
