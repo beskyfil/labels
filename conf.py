@@ -10,14 +10,14 @@ class Config:
         self.auth_conf = os.environ['AUTH_CONFIG']
     
     def check_config(self):
-        if not all(s in ['labels', 'repos'] for s in self.config.sections()):
+        if not all(s in ['labels_loc', 'repos', 'services'] for s in self.config.sections()):
             raise RuntimeError('config error')
 
         if not os.getenv('AUTH_CONFIG'):
             raise RuntimeError('no AUTH_CONFIG environment variable set')
 
     def get_repo_with_labels(self):
-        return self.config['labels']['l']
+        return self.config['labels_loc']['l']
 
     def get_repos_to_synch(self):
         return [self.config['repos'][r] for r in self.config['repos']]
