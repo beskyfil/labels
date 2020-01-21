@@ -6,5 +6,9 @@ class Service(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def abc(self):
+    def update_labels(self, repo):
+        pass
+
+    @abstractmethod
+    def communication(self):
         pass
