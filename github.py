@@ -9,8 +9,22 @@ class Github(Service):
         self.api_url = 'https://api.github.com/repos'
         self.communication()
 
-    def update_labels(self):
-        pass
+    def update_labels(self, owner, repo, req_labels):
+        r = self.session.get(f'{self.api_url}/{owner}/{repo}/labels')
+        existing_labels = r.json()
+        existing_names = [label['name'] for label in existing_labels]
+
+        for label in req_labels:
+            n = label['name']
+            if n in existing_names:
+                r = self.session.patch(f'{self.api_url}/{owner}/{repo}/labels/{n}', json=label)
+            else:
+                r = self.session.post(f'{self.api_url}/{owner}/{repo}/labels', json=label)
+            print(r.status_code)
+            print(r.json())
+
+    # def create_webhook(self, owner, repo):
+    #     self.session.post(f'{self.api_url}/{owner}/{repo}/hooks', json=hook_config)
 
     def communication(self):
         self.session = requests.Session()
