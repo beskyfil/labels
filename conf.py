@@ -22,6 +22,9 @@ class Config:
     def get_repos_to_synch(self):
         return [self.config['repos'][r] for r in self.config['repos']]
 
+    def get_secret(self):
+        return self.config['secret']['secret']
+
     # username:token
     def get_github_login(self):
         return self.auth_conf.split(':')[0], self.auth_conf.split(':')[1]
