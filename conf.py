@@ -10,7 +10,7 @@ class Config:
         self.auth_conf = os.environ['AUTH_CONFIG']
     
     def check_config(self):
-        if not all(s in ['labels_loc', 'repos', 'services'] for s in self.config.sections()):
+        if not all(s in ['labels_loc', 'repos', 'services', 'secret'] for s in self.config.sections()):
             raise RuntimeError('config error')
 
         if not os.getenv('AUTH_CONFIG'):
