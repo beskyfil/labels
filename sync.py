@@ -1,4 +1,4 @@
-from flask import Flask, escape, request
+from flask import Flask, request
 from conf import Config
 from github import Github
 import requests
@@ -17,3 +17,6 @@ def handle_post():
 @app.route('/')
 def hello():
     return 'dummy'
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=1234)
