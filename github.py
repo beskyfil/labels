@@ -33,39 +33,43 @@ class Github(Service):
                 r = self.session.patch(f'{self.api_url}/{owner}/{repo}/labels/{n}', json=label)
             else:
                 r = self.session.post(f'{self.api_url}/{owner}/{repo}/labels', json=label)
-            print(r.status_code)
-            print(r.json())
+            # print(r.status_code)
+            # print(r.json())
 
-    def handle_incoming_hook(self, payload):
-        ret, code = self.check_hook(payload)
-        if ret != 200:
+    def handle_incoming_hook(self, hook):
+        ret, code = self.check_hook(hook)
+        if code != 200:
             return ret, code
-        if payload.headers['X-GitHub-Event'] == 'label':
-            body = payload.json()
-            if body['label']['name'] in self.req_labels_names:
-                owner = body['repository']['owner']['login']
-                repo = body['repository']['name']
-                if body['action'] == 'deleted':
-                    self.session.post(f'{self.api_url}/{owner}/{repo}/labels', json=body['label'])
-                elif body['action'] == 'edited':
-                    n = body['label']['name']
-                    if not 'name' in body['changes']:
-                        old_name = n
-                    else:
-                        old_name = body['changes']['from']
+        if hook.headers['X-GitHub-Event'] == 'label':
+            payload = hook.get_json()
+            # print(payload['action'])
+            # print(payload['label']['name'])
+            owner = payload['repository']['owner']['login']
+            repo = payload['repository']['name']
+            n = payload['label']['name']
+            if payload['action'] == 'deleted':
+                if n in self.req_labels_names:
+                    label = self.req_labels_map[n]
+                    self.session.post(f'{self.api_url}/{owner}/{repo}/labels', json=label)
+            elif payload['action'] == 'edited':
+                # print(payload['changes'])
+                old_name = n
+                if 'name' in payload['changes']:
+                    old_name = payload['changes']['name']['from']
+                if old_name in self.req_labels_names:
                     label = self.req_labels_map[old_name]
                     self.session.patch(f'{self.api_url}/{owner}/{repo}/labels/{n}', json=label)
-                elif body['action'] == 'created':
-                    return 'created hook action ignored', 200
+            elif payload['action'] == 'created':
+                return 'created hook action ignored', 200
         return 'hook was processed', 200
 
-    def check_hook(self, payload):
-        if not "X-Hub-Signature" in payload.headers:
+    def check_hook(self, hook):
+        if not "X-Hub-Signature" in hook.headers:
             return "OK, but unsafe", 200
-        request_signature = payload.headers["X-Hub-Signature"].split('=')
+        request_signature = hook.headers["X-Hub-Signature"].split('=')
         secret = self.config.get_secret()
         secret = secret.encode("utf-8")
-        digest = hmac.new(secret, payload.data, hashlib.sha1).hexdigest()
+        digest = hmac.new(secret, hook.data, hashlib.sha1).hexdigest()
         if len(request_signature) < 2 or request_signature[0] != 'sha1' or not hmac.compare_digest(request_signature[1], digest):
             return 'Invalid signature!', 400
         return 'OK, valid signature', 200
