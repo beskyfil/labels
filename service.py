@@ -12,3 +12,11 @@ class Service(metaclass=ABCMeta):
     @abstractmethod
     def communication(self):
         pass
+
+    @abstractmethod
+    def handle_incoming_hook(self):
+        pass
+
+    # @abstractmethod
+    # def create_webhook(self):
+    #     pass
