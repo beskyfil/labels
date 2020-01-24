@@ -3,6 +3,7 @@ import os
 import requests
 import hashlib
 import hmac
+import helpers
 
 class Config:
     def __init__(self, _cfg_file_name):
@@ -12,20 +13,12 @@ class Config:
         self.check_config()
         self.auth_conf = os.environ['AUTH_CONFIG']
         self.config_labels = self.get_config_labels()
+        self.secret = self.config['secret']['secret']
 
-    def handle_incoming_hook(self, request):
-        pass
-
-    def check_hook(self, hook):
-        if not "X-Hub-Signature" in hook.headers:
-            return "OK, but unsafe", 200
-        request_signature = hook.headers["X-Hub-Signature"].split('=')
-        secret = self.get_secret()
-        secret = secret.encode("utf-8")
-        digest = hmac.new(secret, hook.data, hashlib.sha1).hexdigest()
-        if len(request_signature) < 2 or request_signature[0] != 'sha1' or not hmac.compare_digest(request_signature[1], digest):
-            return 'Invalid signature!', 400
-        return 'OK, valid signature', 200
+    def handle_incoming_hook(self, hook):
+        ret, code = helpers.check_github_hook(hook, self.secret)
+        if code != 200:
+            return ret, code
 
     def get_config_labels(self):
         _, owner, repo = self.get_repo_with_labels().split('/')
@@ -46,8 +39,8 @@ class Config:
     def get_repos_to_synch(self):
         return [self.config['repos'][r] for r in self.config['repos']]
 
-    def get_secret(self):
-        return self.config['secret']['secret']
+    # def get_secret(self):
+    #     return self.config['secret']['secret']
 
     # username:token
     def get_github_login(self):

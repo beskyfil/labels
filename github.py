@@ -1,6 +1,7 @@
 from service import Service
 import requests
 from conf import Config
+import helpers
 
 class Github(Service):
     def __init__(self, config):
@@ -29,13 +30,11 @@ class Github(Service):
             # print(r.json())
 
     def handle_incoming_hook(self, hook):
-        ret, code = self.config.check_hook(hook)
+        ret, code = helpers.check_github_hook(hook, self.config.secret)
         if code != 200:
             return ret, code
         if hook.headers['X-GitHub-Event'] == 'label':
             payload = hook.get_json()
-            # print(payload['action'])
-            # print(payload['label']['name'])
             owner = payload['repository']['owner']['login']
             repo = payload['repository']['name']
             n = payload['label']['name']
@@ -44,7 +43,6 @@ class Github(Service):
                     label = self.req_labels_map[n]
                     self.session.post(f'{self.api_url}/{owner}/{repo}/labels', json=label)
             elif payload['action'] == 'edited':
-                # print(payload['changes'])
                 old_name = n
                 if 'name' in payload['changes']:
                     old_name = payload['changes']['name']['from']
