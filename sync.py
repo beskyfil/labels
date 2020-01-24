@@ -11,8 +11,12 @@ github = Github(c)
 github.update_labels('beskyfil', 'test1')
 
 @app.route('/github', methods=['POST'])
-def handle_post():
+def handle_github():
     return github.handle_incoming_hook(request)
+
+@app.route('/config', methods=['POST'])
+def handle_config():
+    return c.handle_incoming_hook(request)
 
 @app.route('/')
 def hello():

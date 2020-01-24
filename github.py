@@ -1,8 +1,6 @@
 from service import Service
 import requests
 from conf import Config
-import hashlib
-import hmac
 
 class Github(Service):
     def __init__(self, config):
@@ -10,17 +8,11 @@ class Github(Service):
         self.login, self.token = self.config.get_github_login()
         self.api_url = 'https://api.github.com/repos'
         self.communication()
-        _, owner, repo = self.config.get_repo_with_labels().split('/')
-        self.req_labels = self.get_labels(owner, repo)
+        self.req_labels = self.config.config_labels
         self.req_labels_names = [label['name'] for label in self.req_labels]
         self.req_labels_map = {}
         for label in self.req_labels:
             self.req_labels_map[label['name']] = label
-
-    def get_labels(self, owner, repo):
-        r = requests.get(f'{self.api_url}/{owner}/{repo}/labels')
-        labels = r.json()
-        return labels
 
     def update_labels(self, owner, repo):
         r = self.session.get(f'{self.api_url}/{owner}/{repo}/labels')
@@ -37,7 +29,7 @@ class Github(Service):
             # print(r.json())
 
     def handle_incoming_hook(self, hook):
-        ret, code = self.check_hook(hook)
+        ret, code = self.config.check_hook(hook)
         if code != 200:
             return ret, code
         if hook.headers['X-GitHub-Event'] == 'label':
@@ -62,20 +54,6 @@ class Github(Service):
             elif payload['action'] == 'created':
                 return 'created hook action ignored', 200
         return 'hook was processed', 200
-
-    def check_hook(self, hook):
-        if not "X-Hub-Signature" in hook.headers:
-            return "OK, but unsafe", 200
-        request_signature = hook.headers["X-Hub-Signature"].split('=')
-        secret = self.config.get_secret()
-        secret = secret.encode("utf-8")
-        digest = hmac.new(secret, hook.data, hashlib.sha1).hexdigest()
-        if len(request_signature) < 2 or request_signature[0] != 'sha1' or not hmac.compare_digest(request_signature[1], digest):
-            return 'Invalid signature!', 400
-        return 'OK, valid signature', 200
-
-    # def create_webhook(self, owner, repo):
-    #     self.session.post(f'{self.api_url}/{owner}/{repo}/hooks', json=hook_config)
 
     def communication(self):
         self.session = requests.Session()
