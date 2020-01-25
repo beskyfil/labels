@@ -7,23 +7,37 @@ class Github(Service):
     def __init__(self, config):
         self.config = config
         self.login, self.token = self.config.get_github_login()
-        self.api_url = 'https://api.github.com/repos'
         self.communication()
-        self.req_labels = self.config.config_labels
-        self.req_labels_names = [label['name'] for label in self.req_labels]
-        self.req_labels_map = {}
-        for label in self.req_labels:
-            self.req_labels_map[label['name']] = label
+        self.api_url = 'https://api.github.com/repos'
+
+        self.config.bind_to(self.apply_new_config)
+        self.apply_new_config(None, self.config.config_labels)
+
+    def apply_new_config(self, hook, config_labels):
+        self.req_labels = config_labels
+        owner = 'beskyfil'
+        repo = 'test1'
+        # self.update_labels(owner, repo)
+        if hook:
+            payload = hook.get_json()
+            label_name = payload['label']['name']
+            if payload['action'] == 'created':
+                self.session.post(f'{self.api_url}/{owner}/{repo}/labels', json=payload['label'])
+            if payload['action'] == 'edited':
+                if 'name' in payload['changes']:
+                    label_name = payload['changes']['name']['from']
+                self.session.patch(f'{self.api_url}/{owner}/{repo}/labels/{label_name}', json=payload['label'])
+            if payload['action'] == 'deleted':
+                self.session.delete(f'{self.api_url}/{owner}/{repo}/labels/{label_name}')
 
     def update_labels(self, owner, repo):
         r = self.session.get(f'{self.api_url}/{owner}/{repo}/labels')
         existing_labels = r.json()
         existing_names = [label['name'] for label in existing_labels]
 
-        for label in self.req_labels:
-            n = label['name']
-            if n in existing_names:
-                r = self.session.patch(f'{self.api_url}/{owner}/{repo}/labels/{n}', json=label)
+        for label_name, label in self.req_labels.items():
+            if label_name in existing_names:
+                r = self.session.patch(f'{self.api_url}/{owner}/{repo}/labels/{label_name}', json=label)
             else:
                 r = self.session.post(f'{self.api_url}/{owner}/{repo}/labels', json=label)
             # print(r.status_code)
@@ -39,15 +53,15 @@ class Github(Service):
             repo = payload['repository']['name']
             n = payload['label']['name']
             if payload['action'] == 'deleted':
-                if n in self.req_labels_names:
-                    label = self.req_labels_map[n]
+                if n in self.req_labels.keys():
+                    label = self.req_labels[n]
                     self.session.post(f'{self.api_url}/{owner}/{repo}/labels', json=label)
             elif payload['action'] == 'edited':
                 old_name = n
                 if 'name' in payload['changes']:
                     old_name = payload['changes']['name']['from']
-                if old_name in self.req_labels_names:
-                    label = self.req_labels_map[old_name]
+                if old_name in self.req_labels.keys():
+                    label = self.req_labels[old_name]
                     self.session.patch(f'{self.api_url}/{owner}/{repo}/labels/{n}', json=label)
             elif payload['action'] == 'created':
                 return 'created hook action ignored', 200

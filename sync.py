@@ -8,8 +8,6 @@ app = Flask(__name__)
 c = Config('cfg.cfg')
 github = Github(c)
 
-github.update_labels('beskyfil', 'test1')
-
 @app.route('/github', methods=['POST'])
 def handle_github():
     return github.handle_incoming_hook(request)

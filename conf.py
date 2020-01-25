@@ -5,25 +5,38 @@ import hashlib
 import hmac
 import helpers
 
-class Config:
+class Config(object):
     def __init__(self, _cfg_file_name):
         self._cfg_file_name = _cfg_file_name
         self.config = configparser.ConfigParser()
         self.config.read(_cfg_file_name)
         self.check_config()
         self.auth_conf = os.environ['AUTH_CONFIG']
-        self.config_labels = self.get_config_labels()
         self.secret = self.config['secret']['secret']
+        self.config_labels = self.get_config_labels()
+        self._observers = []
+
+    def bind_to(self, callback):
+        print('bound')
+        self._observers.append(callback)
 
     def handle_incoming_hook(self, hook):
         ret, code = helpers.check_github_hook(hook, self.secret)
         if code != 200:
             return ret, code
 
+        self.config_labels = self.get_config_labels()
+        for callback in self._observers:
+            print('announcing change')
+            callback(hook, self.config_labels)
+        return 'ok', 200
+
     def get_config_labels(self):
         _, owner, repo = self.get_repo_with_labels().split('/')
-        r = requests.get(f'https://api.github.com/repos/{owner}/{repo}/labels')
-        labels = r.json()
+        r = requests.get(f'https://api.github.com/repos/{owner}/{repo}/labels').json()
+        labels = {}
+        for label in r:
+            labels[label['name']] = {'name':label['name'], 'color':label['color'], 'description':label['description']}
         return labels
     
     def check_config(self):
