@@ -9,26 +9,30 @@ class Github(Service):
         self.login, self.token = self.config.get_github_login()
         self.communication()
         self.api_url = 'https://api.github.com/repos'
+        self.repos = [{'owner':r.split('/')[1], 'repo':r.split('/')[2]} for r in self.config.get_repos_to_synch() if r.split('/')[0] == 'github']
 
         self.config.bind_to(self.apply_new_config)
         self.apply_new_config(None, self.config.config_labels)
 
     def apply_new_config(self, hook, config_labels):
         self.req_labels = config_labels
-        owner = 'beskyfil'
-        repo = 'test1'
-        # self.update_labels(owner, repo)
         if hook:
             payload = hook.get_json()
             label_name = payload['label']['name']
             if payload['action'] == 'created':
-                self.session.post(f'{self.api_url}/{owner}/{repo}/labels', json=payload['label'])
+                for reposlug in self.repos:
+                    self.session.post(f'{self.api_url}/{reposlug["owner"]}/{reposlug["repo"]}/labels', json=payload['label'])
             if payload['action'] == 'edited':
                 if 'name' in payload['changes']:
                     label_name = payload['changes']['name']['from']
-                self.session.patch(f'{self.api_url}/{owner}/{repo}/labels/{label_name}', json=payload['label'])
+                for reposlug in self.repos:
+                    self.session.patch(f'{self.api_url}/{reposlug["owner"]}/{reposlug["repo"]}/labels/{label_name}', json=payload['label'])
             if payload['action'] == 'deleted':
-                self.session.delete(f'{self.api_url}/{owner}/{repo}/labels/{label_name}')
+                for reposlug in self.repos:
+                    self.session.delete(f'{self.api_url}/{reposlug["owner"]}/{reposlug["repo"]}/labels/{label_name}')
+        else:
+            for reposlug in self.repos:
+                self.update_labels(reposlug["owner"], reposlug["repo"])
 
     def update_labels(self, owner, repo):
         r = self.session.get(f'{self.api_url}/{owner}/{repo}/labels')
@@ -44,7 +48,7 @@ class Github(Service):
             # print(r.json())
 
     def handle_incoming_hook(self, hook):
-        ret, code = helpers.check_github_hook(hook, self.config.secret)
+        ret, code = helpers.check_github_hook(hook, self.config.get_secret())
         if code != 200:
             return ret, code
         if hook.headers['X-GitHub-Event'] == 'label':

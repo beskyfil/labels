@@ -12,7 +12,7 @@ class Config(object):
         self.config.read(_cfg_file_name)
         self.check_config()
         self.auth_conf = os.environ['AUTH_CONFIG']
-        self.secret = self.config['secret']['secret']
+        self.secret = self.get_secret()
         self.config_labels = self.get_config_labels()
         self._observers = []
 
@@ -52,8 +52,8 @@ class Config(object):
     def get_repos_to_synch(self):
         return [self.config['repos'][r] for r in self.config['repos']]
 
-    # def get_secret(self):
-    #     return self.config['secret']['secret']
+    def get_secret(self):
+        return self.config['secret']['secret']
 
     # username:token
     def get_github_login(self):
