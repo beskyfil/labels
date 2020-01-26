@@ -12,6 +12,7 @@ class Config(object):
         self.config.read(_cfg_file_name)
         self.check_config()
         self.auth_conf = os.environ['AUTH_CONFIG']
+        self.gitlab_conf = os.environ['GITLAB_CONFIG']
         self.secret = self.get_secret()
         self.config_labels = self.get_config_labels()
         self._observers = []
@@ -19,6 +20,9 @@ class Config(object):
     def bind_to(self, callback):
         print('bound')
         self._observers.append(callback)
+
+    def get_repos_for_service(self, service_name):
+        [{'owner':r.split('/')[1], 'repo':r.split('/')[2]} for r in self.get_repos_to_synch() if r.split('/')[0] == service_name]
 
     def handle_incoming_hook(self, hook):
         ret, code = helpers.check_github_hook(hook, self.secret)
@@ -46,6 +50,9 @@ class Config(object):
         if not os.getenv('AUTH_CONFIG'):
             raise RuntimeError('no AUTH_CONFIG environment variable set')
 
+        if not os.getenv('GITLAB_CONFIG'):
+            raise RuntimeError('no GITLAB_CONFIG environment variable set')
+
     def get_repo_with_labels(self):
         return self.config['labels_loc']['l']
 
@@ -58,3 +65,6 @@ class Config(object):
     # username:token
     def get_github_login(self):
         return self.auth_conf.split(':')[0], self.auth_conf.split(':')[1]
+
+    def get_gitlab_login(self):
+        return self.gitlab_conf

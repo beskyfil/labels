@@ -17,6 +17,10 @@ class Service(metaclass=ABCMeta):
     def handle_incoming_hook(self):
         pass
 
+    @abstractmethod
+    def apply_new_config(self):
+        pass
+
     # @abstractmethod
     # def create_webhook(self):
     #     pass

@@ -6,10 +6,10 @@ import helpers
 class Github(Service):
     def __init__(self, config):
         self.config = config
-        self.login, self.token = self.config.get_github_login()
+        _, self.token = self.config.get_github_login()
         self.communication()
         self.api_url = 'https://api.github.com/repos'
-        self.repos = [{'owner':r.split('/')[1], 'repo':r.split('/')[2]} for r in self.config.get_repos_to_synch() if r.split('/')[0] == 'github']
+        self.repos = self.config.get_repos_for_service('github')
 
         self.config.bind_to(self.apply_new_config)
         self.apply_new_config(None, self.config.config_labels)
@@ -73,7 +73,7 @@ class Github(Service):
 
     def communication(self):
         self.session = requests.Session()
-        self.session.headers = {'User-Agent': 'Github label sync bot', 'Authorization' : f'token {self.token}'}
+        self.session.headers = {'User-Agent': 'label sync bot', 'Authorization' : f'token {self.token}'}
 
         #check if i can do somethign with this repo
         # r = self.session.get(f'https://api.github.com/repos/{self.reposlug}/issues')
