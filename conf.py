@@ -4,12 +4,13 @@ import requests
 import hashlib
 import hmac
 import helpers
+from pathlib import Path
 
-class Config(object):
+class Config():
     def __init__(self, _cfg_file_name):
         self._cfg_file_name = _cfg_file_name
         self.config = configparser.ConfigParser()
-        self.config.read(_cfg_file_name)
+        self.config.read(Path(_cfg_file_name))
         self.check_config()
         self.auth_conf = os.environ['AUTH_CONFIG']
         self.gitlab_conf = os.environ['GITLAB_CONFIG']
@@ -22,7 +23,7 @@ class Config(object):
         self._observers.append(callback)
 
     def get_repos_for_service(self, service_name):
-        [{'owner':r.split('/')[1], 'repo':r.split('/')[2]} for r in self.get_repos_to_synch() if r.split('/')[0] == service_name]
+        return [{'owner':r.split('/')[1], 'repo':r.split('/')[2]} for r in self.get_repos_to_synch() if r.split('/')[0] == service_name]
 
     def handle_incoming_hook(self, hook):
         ret, code = helpers.check_github_hook(hook, self.secret)
