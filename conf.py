@@ -1,16 +1,13 @@
 import configparser
 import os
 import requests
-import hashlib
-import hmac
 import helpers
-from pathlib import Path
 
 class Config():
     def __init__(self, _cfg_file_name):
         self._cfg_file_name = _cfg_file_name
         self.config = configparser.ConfigParser()
-        self.config.read(Path(_cfg_file_name))
+        self.config.read(_cfg_file_name)
         self.check_config()
         self.auth_conf = os.environ['AUTH_CONFIG']
         self.gitlab_conf = os.environ['GITLAB_CONFIG']
