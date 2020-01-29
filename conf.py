@@ -4,37 +4,58 @@ import requests
 import helpers
 
 class Config():
+    """Config class represents configuration of the main configuration repo, 
+    it only supports Github repository as storage of configuration of the labels
+    """
     def __init__(self, _cfg_file_name):
-        self._cfg_file_name = _cfg_file_name
+        """
+        :param _cfg_file_name: name of the configuration file
+        """
         self.config = configparser.ConfigParser()
         self.config.read(_cfg_file_name)
         self.check_config()
-        self.auth_conf = os.environ['AUTH_CONFIG']
-        self.gitlab_conf = os.environ['GITLAB_CONFIG']
         self.secret = self.get_secret()
         self.config_labels = self.get_config_labels()
         self._observers = []
 
     def bind_to(self, callback):
-        print('bound')
+        """Binds service's update methods to be called whenever config repo changes
+
+        :param callback: callback paramteres is a function, method of each service which updates repositories on given service must be bound to Config class
+        """
+        print(f'bound {callback.__qualname__}')
         self._observers.append(callback)
 
     def get_repos_for_service(self, service_name):
-        return [{'owner':r.split('/')[1], 'repo':r.split('/')[2]} for r in self.get_repos_to_synch() if r.split('/')[0] == service_name]
+        """Returns reposlugs for given service
+
+        :param service_name: string, name of service, currently supported are: github, gitlab
+        :return: dictionary with keys 'owner' and 'repo'
+        """
+        return [{'owner':r.split('/')[1], 'repo':r.split('/')[2]} for r in self.get_repos_to_sync() if r.split('/')[0] == service_name]
 
     def handle_incoming_hook(self, hook):
-        ret, code = helpers.check_github_hook(hook, self.secret)
+        """Handles hook which was received by the app on /config URI, checks integrity of the hook and notifies every observer about the changes
+
+        :param hook: response from github as it was received
+        :return: message, status code tuple, this is required by Flask
+        """
+        msg, code = helpers.check_github_hook(hook, self.secret)
         if code != 200:
-            return ret, code
+            return msg, code
 
         self.config_labels = self.get_config_labels()
         for callback in self._observers:
             print('announcing change')
-            callback(hook, self.config_labels)
+            callback(hook)
         return 'ok', 200
 
     def get_config_labels(self):
-        _, owner, repo = self.get_repo_with_labels().split('/')
+        """Sends GET request to github API and receives JSON of labels in config repo
+
+        :return: dictionary of labels, keys are names of labels, values are simplified labels which contain only name, color, description attributes
+        """
+        owner, repo = self.get_repo_with_labels().split('/')
         r = requests.get(f'https://api.github.com/repos/{owner}/{repo}/labels').json()
         labels = {}
         for label in r:
@@ -42,27 +63,49 @@ class Config():
         return labels
     
     def check_config(self):
+        """Checks integrity of config file, whether it has all mandatory sections, 
+        and if environment variables are set with tokoens for services
+        Otherwise particular exception is raised
+        """
         if not all(s in ['labels_loc', 'repos', 'services', 'secret'] for s in self.config.sections()):
-            raise RuntimeError('config error')
+            raise helpers.ConfigError('required fields missing')
 
         if not os.getenv('AUTH_CONFIG'):
-            raise RuntimeError('no AUTH_CONFIG environment variable set')
+            raise helpers.ConfigError('no AUTH_CONFIG environment variable set')
 
         if not os.getenv('GITLAB_CONFIG'):
-            raise RuntimeError('no GITLAB_CONFIG environment variable set')
+            raise helpers.ConfigError('no GITLAB_CONFIG environment variable set')
 
     def get_repo_with_labels(self):
+        """Reads 'labels_loc' section from config file
+
+        :return: string with slash-separated reposlug of repo which contains config labels to be synced"""
         return self.config['labels_loc']['l']
 
-    def get_repos_to_synch(self):
+    def get_repos_to_sync(self):
+        """Reads 'repos' section from config file
+
+        :return: list of slash-separated reposlugs of 
+        """
         return [self.config['repos'][r] for r in self.config['repos']]
 
     def get_secret(self):
+        """Reads 'secret' section from the config file, this same secret is used for every webhook
+        
+        :return: string, secret
+        """
         return self.config['secret']['secret']
 
-    # username:token
-    def get_github_login(self):
-        return self.auth_conf.split(':')[0], self.auth_conf.split(':')[1]
+    def get_github_token(self):
+        """Reads env variable
 
-    def get_gitlab_login(self):
-        return self.gitlab_conf
+        :return: string, github token
+        """
+        return os.environ['AUTH_CONFIG']
+
+    def get_gitlab_token(self):
+        """Reads env variable
+
+        :return: string, gitlab token
+        """
+        return os.environ['GITLAB_CONFIG']
