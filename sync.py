@@ -7,8 +7,8 @@ import requests
 app = Flask(__name__)
 
 c = Config('cfg.cfg')
-github = Github(c)
-gitlab = Gitlab(c)
+github = Github(c, name='github', api_url='https://api.github.com/repos')
+gitlab = Gitlab(c, name='gitlab', api_url='https://gitlab.com/api/v4/projects')
 
 @app.route('/github', methods=['POST'])
 def handle_github():
