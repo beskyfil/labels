@@ -4,6 +4,9 @@ from conf import Config
 import helpers
 
 class Gitlab(Service):
+    """
+    Class which communicate with gitlab API, manages gitlab repositories
+    """
     def __init__(self, config, name, api_url):
         self.config = config
         self.name = name

@@ -4,6 +4,9 @@ from conf import Config
 import helpers
 
 class Github(Service):
+    """
+    Class which communicate with github API, handles webhooks about changes in repos, manages github repositories
+    """
     def __init__(self, config, name, api_url):
         self.config = config
         self.name = name
