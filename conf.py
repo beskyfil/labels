@@ -56,9 +56,11 @@ class Config():
         :return: dictionary of labels, keys are names of labels, values are simplified labels which contain only name, color, description attributes
         """
         owner, repo = self.get_repo_with_labels().split('/')
-        r = requests.get(f'https://api.github.com/repos/{owner}/{repo}/labels').json()
+        r = requests.get(f'https://api.github.com/repos/{owner}/{repo}/labels')
+        if r.status_code != 200:
+            raise helpers.HTTPError(f'Error {r.status_code} in GET request: {r.json()["message"]}')
         labels = {}
-        for label in r:
+        for label in r.json():
             labels[label['name']] = {'name':label['name'], 'color':label['color'], 'description':label['description']}
         return labels
     
