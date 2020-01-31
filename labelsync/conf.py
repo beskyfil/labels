@@ -1,7 +1,8 @@
 import configparser
 import os
 import requests
-import helpers
+from labelsync.helpers import *
+import pathlib
 
 class Config():
     """Config class represents configuration of the main configuration repo, 
@@ -12,7 +13,7 @@ class Config():
         :param _cfg_file_name: name of the configuration file
         """
         self.config = configparser.ConfigParser()
-        self.config.read(_cfg_file_name)
+        self.config.read(_cfg_file_name.name)
         self.check_config()
         self.secret = self.get_secret()
         self.config_labels = self.get_config_labels()
@@ -40,7 +41,7 @@ class Config():
         :param hook: response from github as it was received
         :return: message, status code tuple, this is required by Flask
         """
-        msg, code = helpers.check_github_hook(hook, self.secret)
+        msg, code = check_github_hook(hook, self.secret)
         if code != 200:
             return msg, code
 
@@ -58,7 +59,7 @@ class Config():
         owner, repo = self.get_repo_with_labels().split('/')
         r = requests.get(f'https://api.github.com/repos/{owner}/{repo}/labels')
         if r.status_code != 200:
-            raise helpers.HTTPError(f'Error {r.status_code} in GET request: {r.json()["message"]}')
+            raise HTTPError(f'Error {r.status_code} in GET request: {r.json()["message"]}')
         labels = {}
         for label in r.json():
             labels[label['name']] = {'name':label['name'], 'color':label['color'], 'description':label['description']}
@@ -70,7 +71,7 @@ class Config():
         Otherwise particular exception is raised
         """
         if not all(s in ['labels_loc', 'repos', 'services', 'secret'] for s in self.config.sections()):
-            raise helpers.ConfigError('required fields missing')
+            raise ConfigError('required fields missing')
 
     def get_repo_with_labels(self):
         """Reads 'labels_loc' section from config file, which is repo location where labels are
@@ -98,7 +99,7 @@ class Config():
         :return: string, github token
         """
         if not os.getenv('AUTH_CONFIG'):
-            raise helpers.ConfigError('no AUTH_CONFIG environment variable set')
+            raise ConfigError('no AUTH_CONFIG environment variable set')
 
         return os.environ['AUTH_CONFIG']
 
@@ -108,6 +109,6 @@ class Config():
         :return: string, gitlab token
         """
         if not os.getenv('GITLAB_CONFIG'):
-            raise helpers.ConfigError('no GITLAB_CONFIG environment variable set')
+            raise ConfigError('no GITLAB_CONFIG environment variable set')
 
         return os.environ['GITLAB_CONFIG']

@@ -1,7 +1,7 @@
-from service import Service
+from labelsync.service import Service
 import requests
-from conf import Config
-import helpers
+from labelsync.conf import Config
+from labelsync.helpers import *
 
 class Github(Service):
     """
@@ -18,19 +18,22 @@ class Github(Service):
         self.apply_new_config()
 
     def create_label(self, owner, repo, label):
-        r = self.session.post(f'{self.api_url}/{owner}/{repo}/labels', json=label)
-        if r.status_code != 201:
-            raise helpers.HTTPError(f'Error {r.status_code} in POST request: {r.json()["message"]}')
+        if self.session.get(f'{self.api_url}/{owner}/{repo}/labels/{label["name"]}').status_code == 200:
+            r = self.session.patch(f'{self.api_url}/{owner}/{repo}/labels/{label["name"]}', json=label)
+        else:
+            r = self.session.post(f'{self.api_url}/{owner}/{repo}/labels', json=label)
+        if r.status_code not in [200, 201]:
+            raise HTTPError(f'Error {r.status_code} in POST request: {r.json()}')
 
     def edit_label(self, owner, repo, label, label_name):
         r = self.session.patch(f'{self.api_url}/{owner}/{repo}/labels/{label_name}', json=label)
         if r.status_code != 200:
-            raise helpers.HTTPError(f'Error {r.status_code} in PATCH request: {r.json()["message"]}')
+            raise HTTPError(f'Error {r.status_code} in PATCH request: {r.json()}')
 
     def delete_label(self, owner, repo, label_name):
         r = self.session.delete(f'{self.api_url}/{owner}/{repo}/labels/{label_name}')
         if r.status_code != 204:
-            raise helpers.HTTPError(f'Error {r.status_code} in DELETE request: {r.json()["message"]}')
+            raise HTTPError(f'Error {r.status_code} in DELETE request: {r.json()}')
 
     def apply_new_config(self, hook=None):
         if hook:
@@ -54,7 +57,7 @@ class Github(Service):
     def update_labels(self, owner, repo):
         r = self.session.get(f'{self.api_url}/{owner}/{repo}/labels')
         if r.status_code != 200:
-            raise helpers.HTTPError(f'error {r.status_code} in GET request: {r.json()["message"]}')
+            raise HTTPError(f'error {r.status_code} in GET request: {r.json()}')
         existing_labels = r.json()
         existing_names = [label['name'] for label in existing_labels]
 
@@ -65,7 +68,7 @@ class Github(Service):
                 self.create_label(owner, repo, label)
 
     def handle_incoming_hook(self, hook):
-        ret, code = helpers.check_github_hook(hook, self.config.get_secret())
+        ret, code = check_github_hook(hook, self.config.get_secret())
         if code != 200:
             return ret, code
         if hook.headers['X-GitHub-Event'] == 'label':
