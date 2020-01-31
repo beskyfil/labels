@@ -72,14 +72,8 @@ class Config():
         if not all(s in ['labels_loc', 'repos', 'services', 'secret'] for s in self.config.sections()):
             raise helpers.ConfigError('required fields missing')
 
-        if not os.getenv('AUTH_CONFIG'):
-            raise helpers.ConfigError('no AUTH_CONFIG environment variable set')
-
-        if not os.getenv('GITLAB_CONFIG'):
-            raise helpers.ConfigError('no GITLAB_CONFIG environment variable set')
-
     def get_repo_with_labels(self):
-        """Reads 'labels_loc' section from config file
+        """Reads 'labels_loc' section from config file, which is repo location where labels are
 
         :return: string with slash-separated reposlug of repo which contains config labels to be synced"""
         return self.config['labels_loc']['l']
@@ -99,15 +93,21 @@ class Config():
         return self.config['secret']['secret']
 
     def get_github_token(self):
-        """Reads env variable
+        """Reads env variable or throws exception if its not set
 
         :return: string, github token
         """
+        if not os.getenv('AUTH_CONFIG'):
+            raise helpers.ConfigError('no AUTH_CONFIG environment variable set')
+
         return os.environ['AUTH_CONFIG']
 
     def get_gitlab_token(self):
-        """Reads env variable
+        """Reads env variable or throws exception if its not set
 
         :return: string, gitlab token
         """
+        if not os.getenv('GITLAB_CONFIG'):
+            raise helpers.ConfigError('no GITLAB_CONFIG environment variable set')
+
         return os.environ['GITLAB_CONFIG']
