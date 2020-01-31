@@ -20,13 +20,13 @@ Setup
 
 * Set environment variables with tokens, `AUTH_CONFIG=<token>` for GitHub and `GITLAB_CONFIG=<token>` and GitLab.
 
+* Install requiremets `Flask`, `requests` and `click`,  `python -m pip install -r requirements.txt`
+
+* Run `python setup.py sdist` to generate distro then install it `python -m pip install ...`
+
 * Set `cfg.cfg` config file accordingly (self-explanatory format).
 
-* Set env var `export FLASK_APP=sync.py`
-
-* Install `Flask` and `requests`
-
-* Execute, i.e. `flask run --host=0.0.0.0 --port=1234`
+* Run `python -m labelsync -c <cfg_file> --host <hostname> --port <port>`
 
 Implementing your own service
 -----------------------------
