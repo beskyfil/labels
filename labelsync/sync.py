@@ -7,7 +7,9 @@ import requests
 
 @click.command(name='labelsync')
 @click.option('-c', '--config-file', type=click.File('r'), help='File with configuration.', required=True)
-def run(config_file):
+@click.option('-h', '--host', default="0.0.0.0", show_default=True, type=click.STRING, help='Host to run app on')
+@click.option('-p', '--port', default=1234, show_default=True, type=click.INT, help='Port oon which the app will listen.')
+def run(config_file, host, port):
     app = Flask(__name__)
 
     cfg = Config(config_file)
@@ -30,4 +32,4 @@ def run(config_file):
     def hello():
         return 'dummy'
 
-    app.run(host='0.0.0.0', port=1234)
+    app.run(host=host, port=port)
