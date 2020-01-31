@@ -24,6 +24,8 @@ Setup
 
 * Set env var `export FLASK_APP=sync.py`
 
+* Install `Flask` and `requests`
+
 * Execute, i.e. `flask run --host=0.0.0.0 --port=1234`
 
 Implementing your own service
