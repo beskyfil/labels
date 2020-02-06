@@ -1,0 +1,7 @@
+.vscode/
+dist/
+labelsync.egg-info/
+labelsync/__pycache__/
+tests/__pycache__/
+token
+venv/
