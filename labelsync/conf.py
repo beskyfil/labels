@@ -14,9 +14,6 @@ class Config():
         """
         self.config = configparser.ConfigParser()
         self.config.read(_cfg_file_name.name)
-        self.check_config()
-        self.secret = self.get_secret()
-        self.config_labels = self.get_config_labels()
         self._observers = []
 
     def bind_to(self, callback):
@@ -45,7 +42,6 @@ class Config():
         if code != 200:
             return msg, code
 
-        self.config_labels = self.get_config_labels()
         for callback in self._observers:
             print('announcing change')
             callback(hook)
@@ -70,8 +66,10 @@ class Config():
         and if environment variables are set with tokoens for services
         Otherwise particular exception is raised
         """
-        if not all(s in ['labels_loc', 'repos', 'services', 'secret'] for s in self.config.sections()):
-            raise ConfigError('required fields missing')
+        print(self.config.sections())
+        if not all(s in self.config.sections() for s in ['labels_loc', 'repos', 'services', 'secret']):
+            raise ConfigError('required fields missing in config file')
+        return 0
 
     def get_repo_with_labels(self):
         """Reads 'labels_loc' section from config file, which is repo location where labels are

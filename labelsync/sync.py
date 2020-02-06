@@ -13,6 +13,7 @@ def run(config_file, host, port):
     app = Flask(__name__)
 
     cfg = Config(config_file)
+    cfg.check_config()
     github = Github(cfg, name='github', api_url='https://api.github.com/repos')
     gitlab = Gitlab(cfg, name='gitlab', api_url='https://gitlab.com/api/v4/projects')
 

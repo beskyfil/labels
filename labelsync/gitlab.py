@@ -67,7 +67,7 @@ class Gitlab(Service):
         existing_labels = r.json()
         existing_names = [label['name'] for label in existing_labels]
 
-        for label_name, label in self.config.config_labels.items():
+        for label_name, label in self.config.get_config_labels().items():
             label_to_send = build_label(label)
             if label_name in existing_names:
                 r = self.session.put(f'{self.api_url}/{owner}%2F{repo}/labels/{label_name}', json=label_to_send)
@@ -75,7 +75,7 @@ class Gitlab(Service):
                 r = self.session.post(f'{self.api_url}/{owner}%2F{repo}/labels', json=label_to_send)
 
     def handle_incoming_hook(self, hook):
-        """Gitlab doesnt support label webhooking"""
+        """Gitlab doesnt support label change event webhooking"""
         pass
 
     def communication(self, token):

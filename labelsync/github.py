@@ -61,7 +61,7 @@ class Github(Service):
         existing_labels = r.json()
         existing_names = [label['name'] for label in existing_labels]
 
-        for label_name, label in self.config.config_labels.items():
+        for label_name, label in self.config.get_config_labels().items():
             if label_name in existing_names:
                 self.edit_label(owner, repo, label, label['name'])
             else:
@@ -77,15 +77,15 @@ class Github(Service):
             repo = payload['repository']['name']
             n = payload['label']['name']
             if payload['action'] == 'deleted':
-                if n in self.config.config_labels.keys():
-                    label = self.config.config_labels[n]
+                if n in self.config.get_config_labels().keys():
+                    label = self.config.get_config_labels()[n]
                     self.create_label(owner, repo, label)
             elif payload['action'] == 'edited':
                 old_name = n
                 if 'name' in payload['changes']:
                     old_name = payload['changes']['name']['from']
-                if old_name in self.config.config_labels.keys():
-                    label = self.config.config_labels[old_name]
+                if old_name in self.config.get_config_labels().keys():
+                    label = self.config.get_config_labels()[old_name]
                     self.edit_label(owner, repo, label, n)
             elif payload['action'] == 'created':
                 return 'created hook action ignored', 200
