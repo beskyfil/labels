@@ -1,5 +1,5 @@
-sem
-===
+labelsync
+=========
 
 .. toctree::
    :maxdepth: 4
@@ -9,3 +9,4 @@ sem
    gitlab
    helpers
    service
+   sync

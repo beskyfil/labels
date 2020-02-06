@@ -12,13 +12,14 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../labelsync'))
+
 
 # -- Project information -----------------------------------------------------
 
 project = 'labelsync'
-copyright = '2020, beskyfil'
-author = 'beskyfil'
+copyright = '2020, beskyfiil'
+author = 'beskyfiil'
 
 
 # -- General configuration ---------------------------------------------------
@@ -28,6 +29,7 @@ author = 'beskyfil'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
 ]
 
